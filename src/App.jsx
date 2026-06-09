@@ -7,7 +7,7 @@ import "./App.css";
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [page, setPage] = useState("tips"); // tips | leaderboard | admin
+  const [page, setPage] = useState("tips");
 
   useEffect(() => {
     const saved = localStorage.getItem("vm_user");
@@ -37,36 +37,24 @@ export default function App() {
             <span className="logo-sub">Tipset</span>
           </div>
           <nav className="nav">
-            <button
-              className={`nav-btn ${page === "tips" ? "active" : ""}`}
-              onClick={() => setPage("tips")}
-            >
-              Mina Tips
+            <button className={`nav-btn ${page === "tips" ? "active" : ""}`} onClick={() => setPage("tips")}>
+              Tippa
             </button>
-            <button
-              className={`nav-btn ${page === "leaderboard" ? "active" : ""}`}
-              onClick={() => setPage("leaderboard")}
-            >
+            <button className={`nav-btn ${page === "leaderboard" ? "active" : ""}`} onClick={() => setPage("leaderboard")}>
               Highscore
             </button>
             {user.isAdmin && (
-              <button
-                className={`nav-btn ${page === "admin" ? "active" : ""}`}
-                onClick={() => setPage("admin")}
-              >
+              <button className={`nav-btn ${page === "admin" ? "active" : ""}`} onClick={() => setPage("admin")}>
                 Admin
               </button>
             )}
           </nav>
           <div className="user-area">
             <span className="user-name">👤 {user.display_name}</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              Logga ut
-            </button>
+            <button className="logout-btn" onClick={handleLogout}>Logga ut</button>
           </div>
         </div>
       </header>
-
       <main className="app-main">
         {page === "tips" && <TipsPage user={user} />}
         {page === "leaderboard" && <LeaderboardPage />}
