@@ -509,3 +509,71 @@ input[type="number"] { -moz-appearance: textfield; }
 .at-player-tip.pts-1 .at-pts { color: var(--silver); }
 .at-player-tip.pts-0 .at-pts { color: #f87171; }
 .no-tips { color: var(--gray); font-size: 0.85rem; padding: 12px 16px; }
+
+/* ===================== LEADERBOARD LAYOUT ===================== */
+.lb-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .lb-layout { grid-template-columns: 1fr; }
+  .lb-right { order: -1; } /* Visa resultat ovanför på mobil */
+}
+
+/* ===================== RECENT RESULTS ===================== */
+.lb-right {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.recent-title {
+  font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--gray);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+}
+.recent-list { display: flex; flex-direction: column; }
+.recent-match {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.1s;
+}
+.recent-match:last-child { border-bottom: none; }
+.recent-match:hover { background: rgba(255,255,255,0.03); }
+.recent-meta {
+  display: flex; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.recent-round {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--gold); font-weight: 600;
+}
+.recent-date { font-size: 0.68rem; color: var(--gray-dark); }
+.recent-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+}
+.recent-team {
+  font-size: 0.8rem; font-weight: 500; color: var(--gray);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.recent-team.away { text-align: right; }
+.recent-team.winner { color: var(--white); font-weight: 700; }
+.recent-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem; color: var(--white);
+  background: rgba(255,255,255,0.07);
+  padding: 2px 8px; border-radius: 4px;
+  text-align: center; white-space: nowrap;
+}
+.recent-empty {
+  padding: 24px; text-align: center;
+  color: var(--gray); font-size: 0.85rem;
+}
