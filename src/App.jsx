@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage";
 import TipsPage from "./pages/TipsPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import AllTipsPage from "./pages/AllTipsPage";
 import AdminPage from "./pages/AdminPage";
+import { DEADLINE } from "./lib/supabase";
 import "./App.css";
+
+const isLocked = new Date() > DEADLINE;
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -43,6 +47,9 @@ export default function App() {
             <button className={`nav-btn ${page === "leaderboard" ? "active" : ""}`} onClick={() => setPage("leaderboard")}>
               Highscore
             </button>
+            <button className={`nav-btn ${page === "alltips" ? "active" : ""}`} onClick={() => setPage("alltips")}>
+              {isLocked ? "Alla tips" : "🔒 Alla tips"}
+            </button>
             {user.isAdmin && (
               <button className={`nav-btn ${page === "admin" ? "active" : ""}`} onClick={() => setPage("admin")}>
                 Admin
@@ -58,6 +65,7 @@ export default function App() {
       <main className="app-main">
         {page === "tips" && <TipsPage user={user} />}
         {page === "leaderboard" && <LeaderboardPage />}
+        {page === "alltips" && <AllTipsPage />}
         {page === "admin" && user.isAdmin && <AdminPage />}
       </main>
     </div>

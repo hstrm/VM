@@ -1,0 +1,147 @@
+import { useState, useEffect } from "react";
+import { getMatches, getAllTips, getResults, calcPoints, GROUP_NAMES, DEADLINE, ROUNDS } from "../lib/supabase";
+
+const isLocked = new Date() > DEADLINE;
+
+export default function AllTipsPage() {
+  const [matches, setMatches] = useState([]);
+  const [allTips, setAllTips] = useState([]);
+  const [results, setResults] = useState({});
+  const [players, setPlayers] = useState([]); // unique players
+  const [activeRound, setActiveRound] = useState("group");
+  const [activeGroup, setActiveGroup] = useState("A");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const [allMatches, tips, allResults] = await Promise.all([
+        getMatches(), getAllTips(), getResults(),
+      ]);
+      setMatches(allMatches);
+      setAllTips(tips);
+      const rMap = {};
+      allResults.forEach((r) => (rMap[r.match_id] = r));
+      setResults(rMap);
+
+      // Build unique players list
+      const seen = new Map();
+      tips.forEach((t) => {
+        if (!seen.has(t.user_id)) {
+          seen.set(t.user_id, t.users?.display_name || t.users?.username || "?");
+        }
+      });
+      setPlayers([...seen.entries()].map(([id, name]) => ({ id, name })));
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (!isLocked) {
+    return (
+      <div className="alltips-locked">
+        <div className="lock-icon">🔒</div>
+        <h2>Tips visas efter stängning</h2>
+        <p>Du kan se alla andras tips när tipsen låses den <strong>11 juni kl 19:00</strong>.</p>
+        <p className="lock-sub">Annars är det ju inte kul att tippa!</p>
+      </div>
+    );
+  }
+
+  if (loading) return (
+    <div className="loading-screen"><div className="loading-ball">⚽</div><p>Laddar tips...</p></div>
+  );
+
+  // Matches for current view
+  const visibleMatches = activeRound === "group"
+    ? matches.filter((m) => m.round === "group" && m.group_name === activeGroup)
+    : matches.filter((m) => m.round === activeRound && m.is_tippable);
+
+  // Build tip lookup: matchId -> userId -> { home, away }
+  const tipMap = {};
+  allTips.forEach((t) => {
+    if (!tipMap[t.match_id]) tipMap[t.match_id] = {};
+    tipMap[t.match_id][t.user_id] = { home: t.home_goals, away: t.away_goals };
+  });
+
+  const availableRounds = ROUNDS.filter((r) => {
+    if (r.key === "group") return true;
+    return matches.some((m) => m.round === r.key && m.is_tippable);
+  });
+
+  return (
+    <div className="alltips-page">
+      <div className="tips-header">
+        <div>
+          <h2>Alla tips</h2>
+          <p className="tips-subtitle">Vad tippade alla?</p>
+        </div>
+      </div>
+
+      {/* Round selector */}
+      <div className="round-tabs">
+        {availableRounds.map((r) => (
+          <button key={r.key} className={`round-tab ${activeRound === r.key ? "active" : ""}`}
+            onClick={() => setActiveRound(r.key)}>
+            {r.short}
+          </button>
+        ))}
+      </div>
+
+      {activeRound === "group" && (
+        <div className="group-tabs">
+          {GROUP_NAMES.map((g) => (
+            <button key={g} className={`group-tab ${activeGroup === g ? "active" : ""}`}
+              onClick={() => setActiveGroup(g)}>
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="alltips-table-wrap">
+        {visibleMatches.map((match) => {
+          const result = results[match.id];
+          const matchTips = tipMap[match.id] || {};
+
+          return (
+            <div key={match.id} className="alltips-match-block">
+              <div className="alltips-match-header">
+                <span className="at-teams">{match.home} – {match.away}</span>
+                <span className="at-date">{formatDate(match.match_date)} {match.match_time}</span>
+                {result && (
+                  <span className="at-result">Resultat: <strong>{result.home_goals}–{result.away_goals}</strong></span>
+                )}
+              </div>
+              <div className="alltips-grid">
+                {players.length === 0 && <p className="no-tips">Inga tips inlagda ännu.</p>}
+                {players.map((player) => {
+                  const tip = matchTips[player.id];
+                  const pts = tip && result
+                    ? calcPoints({ home_goals: tip.home, away_goals: tip.away }, result)
+                    : null;
+                  return (
+                    <div key={player.id} className={`at-player-tip ${pts === 2 ? "pts-2" : pts === 1 ? "pts-1" : pts === 0 ? "pts-0" : ""}`}>
+                      <span className="at-player-name">{player.name}</span>
+                      <span className="at-player-score">
+                        {tip ? `${tip.home}–${tip.away}` : "–"}
+                      </span>
+                      {pts !== null && (
+                        <span className="at-pts">{pts === 2 ? "✓✓" : pts === 1 ? "✓" : "✗"}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("sv-SE", { month: "short", day: "numeric", weekday: "short" });
+}
