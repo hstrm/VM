@@ -17,7 +17,7 @@ export const ROUNDS = [
 
 export const GROUP_NAMES = ["A","B","C","D","E","F","G","H","I","J","K","L"];
 
-export const DEADLINE = new Date("2026-06-11T19:00:00");
+export const DEADLINE = new Date("2026-06-12T00:00:00"); // Tillfälligt förlängt till midnatt 12 juni
 
 // --- USERS ---
 export async function getOrCreateUser(username) {
