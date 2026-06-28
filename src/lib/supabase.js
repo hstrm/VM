@@ -81,11 +81,12 @@ export async function getUserTips(userId) {
 
 export async function getAllTips() {
   const { data, error } = await supabase
-    .from("tips").select("*, users(display_name, username)");
+    .from("tips")
+    .select("*, users(display_name, username)")
+    .limit(5000);
   if (error) throw error;
   return data || [];
 }
-
 // --- RESULTS ---
 export async function getResults() {
   const { data, error } = await supabase.from("results").select("*");
