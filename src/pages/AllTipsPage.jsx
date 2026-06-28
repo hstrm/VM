@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getMatches, getAllTips, getResults, calcPoints, GROUP_NAMES, DEADLINE, ROUNDS } from "../lib/supabase";
+import { supabase, getMatches, getAllTips, getResults, calcPoints, GROUP_NAMES, DEADLINE, ROUNDS } from "../lib/supabase";
 
 const isLocked = new Date() > DEADLINE;
 
@@ -7,7 +7,7 @@ export default function AllTipsPage() {
   const [matches, setMatches] = useState([]);
   const [allTips, setAllTips] = useState([]);
   const [results, setResults] = useState({});
-  const [players, setPlayers] = useState([]); // unique players
+  const [players, setPlayers] = useState([]);
   const [activeRound, setActiveRound] = useState("group");
   const [activeGroup, setActiveGroup] = useState("A");
   const [loading, setLoading] = useState(true);
@@ -19,18 +19,15 @@ export default function AllTipsPage() {
       ]);
       setMatches(allMatches);
       setAllTips(tips);
+
       const rMap = {};
       allResults.forEach((r) => (rMap[r.match_id] = r));
       setResults(rMap);
 
-      // Build unique players list
-      const seen = new Map();
-      tips.forEach((t) => {
-        if (!seen.has(t.user_id)) {
-          seen.set(t.user_id, t.users?.display_name || t.users?.username || "?");
-        }
-      });
-      setPlayers([...seen.entries()].map(([id, name]) => ({ id, name })));
+      // Hämta ALLA användare direkt från users-tabellen
+      const { data: allUsers } = await supabase.from("users").select("id, display_name, username").order("display_name");
+      setPlayers(allUsers || []);
+
       setLoading(false);
     }
     load();
@@ -51,12 +48,11 @@ export default function AllTipsPage() {
     <div className="loading-screen"><div className="loading-ball">⚽</div><p>Laddar tips...</p></div>
   );
 
-  // Matches for current view
   const visibleMatches = activeRound === "group"
     ? matches.filter((m) => m.round === "group" && m.group_name === activeGroup)
     : matches.filter((m) => m.round === activeRound && m.is_tippable);
 
-  // Build tip lookup: matchId -> userId -> { home, away }
+  // matchId -> userId -> { home, away }
   const tipMap = {};
   allTips.forEach((t) => {
     if (!tipMap[t.match_id]) tipMap[t.match_id] = {};
@@ -73,11 +69,10 @@ export default function AllTipsPage() {
       <div className="tips-header">
         <div>
           <h2>Alla tips</h2>
-          <p className="tips-subtitle">Vad tippade alla?</p>
+          <p className="tips-subtitle">Vad tippade alla? ({players.length} spelare)</p>
         </div>
       </div>
 
-      {/* Round selector */}
       <div className="round-tabs">
         {availableRounds.map((r) => (
           <button key={r.key} className={`round-tab ${activeRound === r.key ? "active" : ""}`}
@@ -113,17 +108,16 @@ export default function AllTipsPage() {
                 )}
               </div>
               <div className="alltips-grid">
-                {players.length === 0 && <p className="no-tips">Inga tips inlagda ännu.</p>}
                 {players.map((player) => {
                   const tip = matchTips[player.id];
                   const pts = tip && result
                     ? calcPoints({ home_goals: tip.home, away_goals: tip.away }, result)
                     : null;
                   return (
-                    <div key={player.id} className={`at-player-tip ${pts === 2 ? "pts-2" : pts === 1 ? "pts-1" : pts === 0 ? "pts-0" : ""}`}>
-                      <span className="at-player-name">{player.name}</span>
+                    <div key={player.id} className={`at-player-tip ${pts === 2 ? "pts-2" : pts === 1 ? "pts-1" : pts === 0 && result ? "pts-0" : ""}`}>
+                      <span className="at-player-name">{player.display_name}</span>
                       <span className="at-player-score">
-                        {tip ? `${tip.home}–${tip.away}` : "–"}
+                        {tip !== undefined ? `${tip.home}–${tip.away}` : "–"}
                       </span>
                       {pts !== null && (
                         <span className="at-pts">{pts === 2 ? "✓✓" : pts === 1 ? "✓" : "✗"}</span>
