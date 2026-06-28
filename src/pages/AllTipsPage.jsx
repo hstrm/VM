@@ -19,6 +19,9 @@ export default function AllTipsPage() {
       ]);
       setMatches(allMatches);
       setAllTips(tips);
+      setAllTips(tips);
+      console.log("Antal tips hämtade:", tips.length);
+      console.log("Tips för match 151:", tips.filter(t => t.match_id === 151));
 
       const rMap = {};
       allResults.forEach((r) => (rMap[r.match_id] = r));
